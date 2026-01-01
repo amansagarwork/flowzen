@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  assetPrefix: '.',
+  // output: 'export',
+  // assetPrefix: '.',
   images: {
     unoptimized: true,
   },

@@ -1,10 +1,17 @@
 "use client";
 import React from 'react';
-import { Home, Terminal, BarChart2, Settings, Activity } from 'lucide-react';
+import { Home, Terminal, BarChart2, Settings, Activity, Zap } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
-const Sidebar = () => {
+interface SidebarProps {
+    activeTab: string;
+    onTabChange: (tab: string) => void;
+}
+
+const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     const menuItems = [
-        { icon: Home, label: 'Dashboard', active: true },
+        { icon: Home, label: 'Dashboard' },
         { icon: Terminal, label: 'Console' },
         { icon: Activity, label: 'Activity' },
         { icon: BarChart2, label: 'Insights' },
@@ -12,32 +19,44 @@ const Sidebar = () => {
     ];
 
     return (
-        <div className="h-screen w-20 flex flex-col items-center py-8 glass border-r border-slate-700/50 z-50 relative">
-            <div className="mb-10 p-2 bg-indigo-500/20 rounded-xl">
-                <Activity className="w-8 h-8 text-indigo-400" />
+        <aside className="w-64 border-r border-border h-screen bg-background/50 backdrop-blur-sm flex flex-col p-4">
+            <div className="flex items-center gap-2 px-2 mb-8">
+                <div className="bg-primary/20 p-2 rounded-lg">
+                    <Zap className="w-5 h-5 text-primary" />
+                </div>
+                <span className="font-bold text-xl tracking-tight">FlowZen</span>
             </div>
 
-            <div className="flex flex-col gap-6 w-full">
+            <nav className="flex-1 space-y-2">
                 {menuItems.map((item, index) => (
-                    <button
+                    <Button
                         key={index}
-                        className={`w-full flex justify-center py-3 relative group transition-all duration-300 ${item.active ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-100'
-                            }`}
-                    >
-                        <item.icon className={`w-6 h-6 ${item.active ? 'drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]' : ''}`} />
-                        {item.active && (
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-l-full shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                        variant={activeTab === item.label ? "secondary" : "ghost"}
+                        onClick={() => onTabChange(item.label)}
+                        className={cn(
+                            "w-full justify-start gap-3 px-3",
+                            activeTab === item.label ? "font-medium" : "text-muted-foreground hover:text-foreground"
                         )}
-
-                        {/* Tooltip */}
-                        <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-slate-700">
-                            {item.label}
-                        </span>
-                    </button>
+                    >
+                        <item.icon className="w-4 h-4" />
+                        {item.label}
+                    </Button>
                 ))}
+            </nav>
+
+            <div className="mt-auto pt-4 border-t border-border">
+                <Button
+                    variant={activeTab === 'Support' ? "secondary" : "ghost"}
+                    onClick={() => onTabChange('Support')}
+                    className="w-full justify-start gap-3 px-3 text-muted-foreground"
+                >
+                    <Settings className="w-4 h-4" />
+                    Support
+                </Button>
             </div>
-        </div>
+        </aside>
     );
 };
 
 export default Sidebar;
+
