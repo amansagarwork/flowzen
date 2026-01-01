@@ -91,7 +91,7 @@ const TerminalWidget = ({ isAuthorized = false, onAuthorize }: TerminalWidgetPro
     };
 
     return (
-        <Card className="flex flex-col h-full overflow-hidden border-border bg-card/50 relative">
+        <Card className="flex flex-col min-h-[600px] overflow-hidden border-border bg-card/50 relative">
             {/* Privacy Overlay - Only shows if mounted, NOT authorized, AND there are logs to protect */}
             {isMounted && !isAuthorized && logs.length > 0 && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/20 backdrop-blur-md rounded-xl border border-dashed border-primary/30 m-1">
@@ -159,7 +159,7 @@ const TerminalWidget = ({ isAuthorized = false, onAuthorize }: TerminalWidgetPro
             </CardHeader>
 
             <CardContent className={cn("flex-1 p-0 overflow-hidden transition-all duration-500", !isAuthorized && "filter blur-sm pointer-events-none opacity-40")}>
-                <ScrollArea className="h-full font-mono text-xs p-4 overflow-auto">
+                <ScrollArea className="h-[400px] font-mono text-xs p-4 overflow-auto">
                     <div className="space-y-1.5" ref={scrollRef}>
                         {logs.map((log, i) => (
                             <div key={i} className="flex gap-3 leading-relaxed group hover:bg-muted/30 px-2 py-0.5 rounded transition-colors whitespace-pre-wrap">
@@ -167,7 +167,7 @@ const TerminalWidget = ({ isAuthorized = false, onAuthorize }: TerminalWidgetPro
                                     {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })}
                                 </span>
                                 <Badge
-                                    variant={log.level === 'ERROR' ? 'destructive' : log.level === 'CMD' ? 'outline' : log.level === 'WARN' ? 'warning' : 'secondary'}
+                                    variant={log.level === 'ERROR' ? 'destructive' : log.level === 'CMD' ? 'outline' : log.level === 'WARN' ? 'secondary' : 'secondary'}
                                     className="px-1.5 py-0 h-4 text-[10px] font-bold uppercase tracking-wider"
                                 >
                                     {log.level}

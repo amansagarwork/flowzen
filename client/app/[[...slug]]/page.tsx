@@ -10,6 +10,18 @@ import { Search, Bell, User, Sun, Moon, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
+import { FlowZenMetrics } from '@/components/flowzen-metrics';
+import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { DataTable, schema } from '@/components/data-table';
+import { z } from 'zod';
+
+const sampleData: z.infer<typeof schema>[] = [
+    { id: 1, header: "Refactor suggested in auth.ts", type: "Code Quality", status: "In Progress", target: "Improve", limit: "N/A", reviewer: "AI Analyzer" },
+    { id: 2, header: "Dependencies outdated: 2 found", type: "Security", status: "Pending", target: "Update", limit: "Critical", reviewer: "Dependency Bot" },
+    { id: 3, header: "Test coverage improved by +5%", type: "Quality", status: "Done", target: "87%", limit: "80%", reviewer: "CI Pipeline" },
+    { id: 4, header: "Bundle size optimized", type: "Performance", status: "Done", target: "< 500KB", limit: "600KB", reviewer: "Build Agent" },
+    { id: 5, header: "API response time check", type: "Performance", status: "Done", target: "< 200ms", limit: "500ms", reviewer: "Monitor" },
+];
 
 export default function Home() {
     const params = useParams();
@@ -68,15 +80,34 @@ export default function Home() {
         switch (activeTab) {
             case 'Dashboard':
                 return (
-                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-0">
-                        <div className="h-full min-h-0">
-                            <TerminalWidget
-                                isAuthorized={terminalAuthorized}
-                                onAuthorize={() => setTerminalAuthorized(true)}
-                            />
+                    <div className="flex-1 flex flex-col gap-6 overflow-auto pr-2 custom-scrollbar pb-12">
+                        {/* High-level metrics */}
+                        <FlowZenMetrics />
+
+                        <div className="grid grid-cols-1 lg:grid-cols-0 gap-6 px-4 lg:px-6">
+                            {/* Main Performance Chart */}
+                            <div className="min-h-[350px]">
+                                <ChartAreaInteractive />
+                            </div>
+
+                            {/* Terminal Widget */}
+                            {/* <div className="min-h-[350px]">
+                                <TerminalWidget
+                                    isAuthorized={terminalAuthorized}
+                                    onAuthorize={() => setTerminalAuthorized(true)}
+                                />
+                            </div> */}
                         </div>
-                        <div className="h-full min-h-0">
-                            <InsightsPanel />
+
+                        {/* Recent Activity / System Logs */}
+                        <div className="bg-background rounded-xl border border-border pb-10 mx-4 lg:mx-6">
+                            <div className="p-6 border-b border-border mb-4">
+                                <h3 className="text-lg font-semibold">Project Insights</h3>
+                                <p className="text-sm text-muted-foreground">AI-powered recommendations and code quality analysis.</p>
+                            </div>
+                            <div className="px-0">
+                                <DataTable data={sampleData} />
+                            </div>
                         </div>
                     </div>
                 );
