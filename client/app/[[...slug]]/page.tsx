@@ -151,19 +151,16 @@ export default function Home() {
                         {/* High-level metrics */}
                         <FlowZenMetrics />
 
-                        <div className="grid grid-cols-1 lg:grid-cols-0 gap-6 px-4 lg:px-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch gap-6 px-4 lg:px-6">
                             {/* Main Performance Chart */}
-                            <div className="min-h-[350px]">
+                            <div className="h-[380px] md:h-[420px] overflow-hidden">
                                 <ChartAreaInteractive />
                             </div>
 
                             {/* Terminal Widget */}
-                            {/* <div className="min-h-[350px]">
-                                <TerminalWidget
-                                    isAuthorized={terminalAuthorized}
-                                    onAuthorize={() => setTerminalAuthorized(true)}
-                                />
-                            </div> */}
+                            <div className="h-[380px] md:h-[420px] overflow-hidden">
+                                <TerminalWidget />
+                            </div>
                         </div>
 
                         {/* Recent Activity / System Logs */}
@@ -181,10 +178,7 @@ export default function Home() {
             case 'Console':
                 return (
                     <div className="flex-1 h-full min-h-0">
-                        <TerminalWidget
-                            isAuthorized={terminalAuthorized}
-                            onAuthorize={() => setTerminalAuthorized(true)}
-                        />
+                        <TerminalWidget />
                     </div>
                 );
             case 'Insights':
@@ -284,10 +278,9 @@ export default function Home() {
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="bottom" className="bg-background border-border text-foreground">
-                                            <div className="space-y-1">
+                                            <div className="space-y-1 font-medium">
                                                 <p className="font-semibold">Test User</p>
                                                 <p className="text-xs text-muted-foreground">test@gmail.com</p>
-                                                <p className="text-xs text-muted-foreground">Click to view profile</p>
                                             </div>
                                         </TooltipContent>
                                     </Tooltip>
