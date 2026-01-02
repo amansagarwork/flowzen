@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Zap, ShieldCheck, Eye, EyeOff } from "lucide-react"
+import { PasswordStrength } from "./PasswordStrength"
 
 export function LoginForm({
   className,
@@ -25,7 +26,7 @@ export function LoginForm({
   onModeChange,
   ...props
 }: React.ComponentProps<"div"> & {
-  onLogin?: () => void;
+  onLogin?: (userData: { id: string; username: string | null; email: string; createdAt: string; onboardingCompleted: boolean; projectInterests: string[] }, token: string) => void;
   defaultMode?: "login" | "signup";
   onModeChange?: (mode: "login" | "signup") => void;
 }) {
@@ -34,6 +35,7 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
 
   // Sync mode if defaultMode changes from parent (URL change)
@@ -47,30 +49,98 @@ export function LoginForm({
     setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     
-    // Hardcoded credentials validation
-    if (mode === "login") {
-      if (email === "test@gmail.com" && password === "123456") {
-        setTimeout(() => {
-          setLoading(false);
-          onLogin?.();
-        }, 1000);
+    try {
+      const GraphQL_ENDPOINT = "http://localhost:5000/graphql";
+      
+      if (mode === "login") {
+        const loginMutation = `
+          mutation {
+            login(input: {
+              email: "${email}"
+              password: "${password}"
+            }) {
+              token
+              user {
+                id
+                username
+                email
+                createdAt
+                onboardingCompleted
+                projectInterests
+              }
+            }
+          }
+        `;
+        
+        const response = await fetch(GraphQL_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: loginMutation })
+        });
+        
+        const result = await response.json();
+        
+        if (result.errors) {
+          setError(result.errors[0].message);
+        } else if (result.data?.login) {
+          localStorage.removeItem('flowzen_pending_onboarding');
+          // Pass user data and token to parent
+          onLogin?.(result.data.login.user, result.data.login.token);
+        } else {
+          setError("Login failed. Please try again.");
+        }
       } else {
-        setTimeout(() => {
-          setLoading(false);
-          setError("Invalid email or password. Use 'test@gmail.com' and '123456'");
-        }, 1000);
+        // Signup mode
+        const signupMutation = `
+          mutation {
+            register(input: {
+              email: "${email}"
+              password: "${password}"
+            }) {
+              token
+              user {
+                id
+                username
+                email
+                createdAt
+                onboardingCompleted
+                projectInterests
+              }
+            }
+          }
+        `;
+        
+        const response = await fetch(GraphQL_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: signupMutation })
+        });
+        
+        const result = await response.json();
+        
+        if (result.errors) {
+          setError(result.errors[0].message);
+        } else if (result.data?.register) {
+          localStorage.setItem('flowzen_pending_onboarding', 'true');
+          // Pass user data and token to parent
+          onLogin?.(result.data.register.user, result.data.register.token);
+        } else {
+          setError("Registration failed. Please try again.");
+        }
       }
-    } else {
-      // For signup, just proceed with dummy validation
-      setTimeout(() => {
-        setLoading(false);
-        onLogin?.();
-      }, 1000);
+    } catch (error) {
+      setError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,17 +163,6 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={handleSubmit}>
             <FieldGroup>
-              {mode === "signup" && (
-                <Field>
-                  <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="John Doe"
-                    required
-                  />
-                </Field>
-              )}
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
@@ -149,6 +208,9 @@ export function LoginForm({
                     )}
                   </button>
                 </div>
+                {mode === "signup" && (
+                  <PasswordStrength password={password} />
+                )}
               </Field>
               {error && (
                 <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">
@@ -175,7 +237,7 @@ export function LoginForm({
                     variant="ghost"
                     size="sm"
                     className="text-xs text-muted-foreground hover:text-primary cursor-pointer"
-                    onClick={onLogin}
+                    onClick={() => onLogin?.({ id: 'guest', username: 'Guest User', email: 'guest@flowzen.com', createdAt: new Date().toISOString(), onboardingCompleted: true, projectInterests: [] }, 'guest-token')}
                   >
                     Skip for now (Guest Mode)
                   </Button>

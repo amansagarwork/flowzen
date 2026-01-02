@@ -4,16 +4,11 @@
   "description": "Intelligent Automation Dashboard",
   "author": "FlowZen Team",
   "private": true,
-  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "electron": "cross-env NODE_ENV=production electron .",
-    "electron:dev": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "pack": "electron-builder --dir"
+    "lint": "eslint"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -36,11 +31,8 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tabler/icons-react": "^3.36.0",
     "@tanstack/react-table": "^8.21.3",
-    "body-parser": "^2.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "cors": "^2.8.5",
-    "express": "^5.2.1",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "next-themes": "^0.4.6",
@@ -58,30 +50,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.4.0",
-    "typescript": "^5",
-    "wait-on": "^7.2.0"
-  },
-  "build": {
-    "appId": "com.flowzen.app",
-    "productName": "FlowZen",
-    "files": [
-      "electron/**/*",
-      "out/**/*",
-      "package.json"
-    ],
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis"
-    }
+    "typescript": "^5"
   }
 }

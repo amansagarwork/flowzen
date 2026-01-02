@@ -16,6 +16,8 @@ import { FlowZenMetrics } from '@/components/flowzen-metrics';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { DataTable, schema } from '@/components/data-table';
 import { z } from 'zod';
+import { useSession } from '../../contexts/SessionContext';
+import { OnboardingFlow } from '../../components/OnboardingFlow';
 
 const sampleData: z.infer<typeof schema>[] = [
     { id: 1, header: "Refactor suggested in auth.ts", type: "Code Quality", status: "In Progress", target: "Improve", limit: "N/A", reviewer: "AI Analyzer" },
@@ -65,6 +67,17 @@ export default function Home() {
     const params = useParams();
     const router = useRouter();
     const pathname = usePathname();
+    const { 
+        isLoggedIn, 
+        currentUser, 
+        terminalAuthorized, 
+        isLoading, 
+        login, 
+        logout, 
+        checkSession,
+        completeOnboarding,
+        skipOnboarding
+    } = useSession();
 
     // Derive activeTab from URL slug
     // params.slug is an array: [] for /, ['console'] for /console, etc.
@@ -74,29 +87,27 @@ export default function Home() {
     // Format slug for display and state mapping
     const activeTab = slug.charAt(0).toUpperCase() + slug.slice(1);
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [showLogin, setShowLogin] = useState(false);
-    const [terminalAuthorized, setTerminalAuthorized] = useState(false);
     const [mounted, setMounted] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [showLogin, setShowLogin] = useState(false);
+    const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
     const { theme, setTheme } = useTheme();
 
     // Handle client-side mount
     useEffect(() => {
         setMounted(true);
-        // Check localStorage on client-side mount
-        const savedAuth = localStorage.getItem('flowzen-auth');
-        if (savedAuth === 'true') {
-            setIsLoggedIn(true);
-        }
     }, []);
 
-    // Save auth state to localStorage whenever it changes (only on client)
     useEffect(() => {
-        if (mounted) {
-            localStorage.setItem('flowzen-auth', isLoggedIn.toString());
-        }
-    }, [isLoggedIn, mounted]);
+        if (!mounted) return;
+        setShouldShowOnboarding(localStorage.getItem('flowzen_pending_onboarding') === 'true');
+    }, [mounted]);
+
+    // Helper function to get user initials
+    const getUserInitials = (name: string | null | undefined): string => {
+        if (!name) return 'TU';
+        return name.split(' ').map((word: string) => word[0]).join('').toUpperCase();
+    };
 
     const toggleTheme = () => {
         setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -111,23 +122,39 @@ export default function Home() {
     const isSignupRoute = slug === 'signup';
     const isAuthRoute = isLoginRoute || isSignupRoute;
 
-    const handleLogin = () => {
-        setIsLoggedIn(true);
+    // If user is already logged in, never stay on auth routes
+    useEffect(() => {
+        if (mounted && isAuthRoute && isLoggedIn && !shouldShowOnboarding) {
+            router.replace('/');
+        }
+    }, [mounted, isAuthRoute, isLoggedIn, shouldShowOnboarding, router]);
+
+    const handleOnboardingComplete = async (username: string, projectInterests: string[]) => {
+        try {
+            await completeOnboarding(username, projectInterests);
+            localStorage.removeItem('flowzen_pending_onboarding');
+            setShouldShowOnboarding(false);
+        } catch (error) {
+            console.error('Onboarding failed:', error);
+        }
+    };
+
+    const handleOnboardingSkip = () => {
+        // User skipped onboarding, mark as completed locally so it doesn't re-open
+        skipOnboarding();
+        localStorage.removeItem('flowzen_pending_onboarding');
+        setShouldShowOnboarding(false);
+        router.push('/');
+    };
+
+    const handleLogin = (userData: { id: string; username: string | null; email: string; createdAt: string; onboardingCompleted: boolean; projectInterests: string[] }, token: string) => {
+        login(userData, token);
         setShowLogin(false);
+        
         // If we were on an auth route, go to dashboard
         if (isAuthRoute) {
             router.push('/');
         }
-    };
-
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setTerminalAuthorized(false);
-        // Clear auth from localStorage (only on client)
-        if (mounted) {
-            localStorage.removeItem('flowzen-auth');
-        }
-        router.push('/');
     };
 
     const handleProfileClick = () => {
@@ -136,6 +163,11 @@ export default function Home() {
         } else {
             router.push('/profile');
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
     };
 
     const handleTabChange = (tab: string) => {
@@ -199,12 +231,58 @@ export default function Home() {
         }
     };
 
+    // Show loading spinner while checking authentication
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render main content until authentication is checked
+    if (!mounted || isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-4 text-muted-foreground">Loading application...</p>
+                </div>
+            </div>
+        );
+    }
+
     // Render Login screen if on auth route or forced (only after mounted)
-    if (mounted && (isAuthRoute || showLogin) && !isLoggedIn) {
+    if ((isAuthRoute || showLogin) && !isLoggedIn) {
         return (
             <Login
                 onLogin={handleLogin}
                 defaultMode={isSignupRoute ? "signup" : "login"}
+            />
+        );
+    }
+
+    // If logged in user is on auth route, wait for redirect
+    if (isAuthRoute && isLoggedIn) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-4 text-muted-foreground">Redirecting...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show onboarding only right after signup (pending flag)
+    if (shouldShowOnboarding && isLoggedIn && currentUser) {
+        return (
+            <OnboardingFlow 
+                onComplete={handleOnboardingComplete}
+                onSkip={handleOnboardingSkip}
             />
         );
     }
@@ -270,17 +348,20 @@ export default function Home() {
                                         <TooltipTrigger asChild>
                                             <Button variant="ghost" size="icon" onClick={handleProfileClick} className="h-9 w-9 rounded-lg cursor-pointer">
                                                 <Avatar className="h-8 w-8">
-                                                    <AvatarImage src="" alt="Profile" />
-                                                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                                                        TU
-                                                    </AvatarFallback>
+                                                    {currentUser?.email ? (
+                                                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                                                            {currentUser?.username ? getUserInitials(currentUser.username) : 'TU'}
+                                                        </AvatarFallback>
+                                                    ) : (
+                                                        <AvatarImage src="" alt="Profile" />
+                                                    )}
                                                 </Avatar>
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent side="bottom" className="bg-background border-border text-foreground">
                                             <div className="space-y-1 font-medium">
-                                                <p className="font-semibold">Test User</p>
-                                                <p className="text-xs text-muted-foreground">test@gmail.com</p>
+                                                <p className="font-semibold">{currentUser?.username || 'Test User'}</p>
+                                                <p className="text-xs text-muted-foreground">{currentUser?.email || 'test@gmail.com'}</p>
                                             </div>
                                         </TooltipContent>
                                     </Tooltip>

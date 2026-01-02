@@ -3,26 +3,61 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, Mail, Calendar, Shield, Settings, LogOut } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { User, Mail, Calendar, Shield, Settings, LogOut, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useSession } from '../../contexts/SessionContext';
 
 export default function ProfilePage() {
     const router = useRouter();
+    const { isLoggedIn, currentUser, logout } = useSession();
+
+    // Redirect to login if not authenticated
+    React.useEffect(() => {
+        if (!isLoggedIn) {
+            router.push('/login');
+        }
+    }, [isLoggedIn, router]);
+
+    if (!isLoggedIn || !currentUser) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const getUserInitials = (name: string | null | undefined): string => {
+        if (!name) return 'TU';
+        return name.split(' ').map((word: string) => word[0]).join('').toUpperCase();
+    };
 
     const handleLogout = () => {
-        // Clear auth from localStorage
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('flowzen-auth');
-        }
-        router.push('/');
+        logout();
+        router.push('/login');
     };
 
     return (
         <div className="min-h-screen bg-background p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-                    <p className="text-muted-foreground">Manage your account settings and preferences</p>
+                    <div className="flex items-center gap-4 mb-4">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => router.back()}
+                            className="h-10 w-10"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+                            <p className="text-muted-foreground">Manage your account settings and preferences</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid gap-6">
@@ -37,14 +72,16 @@ export default function ProfilePage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                                    <User className="h-8 w-8 text-primary" />
-                                </div>
+                                <Avatar className="h-16 w-16">
+                                    <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
+                                        {getUserInitials(currentUser.username)}
+                                    </AvatarFallback>
+                                </Avatar>
                                 <div>
-                                    <h3 className="font-semibold">Test User</h3>
+                                    <h3 className="font-semibold">{currentUser.username}</h3>
                                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                                         <Mail className="h-3 w-3" />
-                                        test@gmail.com
+                                        {currentUser.email}
                                     </p>
                                 </div>
                             </div>

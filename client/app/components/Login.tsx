@@ -5,7 +5,7 @@ import { Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface LoginProps {
-    onLogin: () => void;
+    onLogin: (userData: { id: string; username: string | null; email: string; createdAt: string; onboardingCompleted: boolean; projectInterests: string[] }, token: string) => void;
     defaultMode?: "login" | "signup";
 }
 
