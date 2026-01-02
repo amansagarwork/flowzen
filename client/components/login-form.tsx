@@ -32,6 +32,9 @@ export function LoginForm({
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   // Sync mode if defaultMode changes from parent (URL change)
   useEffect(() => {
@@ -41,15 +44,34 @@ export function LoginForm({
   const handleModeToggle = (newMode: "login" | "signup") => {
     setMode(newMode);
     onModeChange?.(newMode);
+    setError("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onLogin?.();
-    }, 1000);
+    setError("");
+    
+    // Hardcoded credentials validation
+    if (mode === "login") {
+      if (email === "test@gmail.com" && password === "123456") {
+        setTimeout(() => {
+          setLoading(false);
+          onLogin?.();
+        }, 1000);
+      } else {
+        setTimeout(() => {
+          setLoading(false);
+          setError("Invalid email or password. Use 'test@gmail.com' and '123456'");
+        }, 1000);
+      }
+    } else {
+      // For signup, just proceed with dummy validation
+      setTimeout(() => {
+        setLoading(false);
+        onLogin?.();
+      }, 1000);
+    }
   };
 
   return (
@@ -88,6 +110,8 @@ export function LoginForm({
                   id="email"
                   type="email"
                   placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </Field>
@@ -108,6 +132,8 @@ export function LoginForm({
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                     className="pr-10"
                   />
@@ -124,6 +150,11 @@ export function LoginForm({
                   </button>
                 </div>
               </Field>
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">
+                  {error}
+                </div>
+              )}
               <Field>
                 <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
                   {loading ? (mode === "login" ? "Authenticating..." : "Creating Account...") : (mode === "login" ? "Login" : "Sign Up")}

@@ -6,7 +6,9 @@ import TerminalWidget from '../components/TerminalWidget';
 import InsightsPanel from '../components/InsightsPanel';
 import Login from '../components/Login';
 import { Badge } from '@/components/ui/badge';
-import { Search, Bell, User, Sun, Moon, LogOut } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Search, Bell, User, LogOut, Circle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
@@ -22,6 +24,42 @@ const sampleData: z.infer<typeof schema>[] = [
     { id: 4, header: "Bundle size optimized", type: "Performance", status: "Done", target: "< 500KB", limit: "600KB", reviewer: "Build Agent" },
     { id: 5, header: "API response time check", type: "Performance", status: "Done", target: "< 200ms", limit: "500ms", reviewer: "Monitor" },
 ];
+
+const ContrastIcon = ({ className }: { className?: string }) => (
+    <svg 
+        className={className} 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke="currentColor"
+    >
+        <path d="M0 0h24v24H0z" fill="none" stroke="none"/>
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 3l0 18"/>
+        <path d="M12 9l4.65 -4.65"/>
+        <path d="M12 14.3l7.37 -7.37"/>
+        <path d="M12 19.6l8.85 -8.85"/>
+    </svg>
+);
+
+const CollapseIcon = ({ className }: { className?: string }) => (
+    <svg 
+        className={className} 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="12" y1="3" x2="12" y2="21"></line>
+    </svg>
+);
 
 export default function Home() {
     const params = useParams();
@@ -39,10 +77,33 @@ export default function Home() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
     const [terminalAuthorized, setTerminalAuthorized] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const { theme, setTheme } = useTheme();
+
+    // Handle client-side mount
+    useEffect(() => {
+        setMounted(true);
+        // Check localStorage on client-side mount
+        const savedAuth = localStorage.getItem('flowzen-auth');
+        if (savedAuth === 'true') {
+            setIsLoggedIn(true);
+        }
+    }, []);
+
+    // Save auth state to localStorage whenever it changes (only on client)
+    useEffect(() => {
+        if (mounted) {
+            localStorage.setItem('flowzen-auth', isLoggedIn.toString());
+        }
+    }, [isLoggedIn, mounted]);
 
     const toggleTheme = () => {
         setTheme(theme === 'dark' ? 'light' : 'dark');
+    };
+
+    const toggleSidebar = () => {
+        setIsSidebarCollapsed(!isSidebarCollapsed);
     };
 
     // Check if we are in an auth route
@@ -62,12 +123,18 @@ export default function Home() {
     const handleLogout = () => {
         setIsLoggedIn(false);
         setTerminalAuthorized(false);
+        // Clear auth from localStorage (only on client)
+        if (mounted) {
+            localStorage.removeItem('flowzen-auth');
+        }
         router.push('/');
     };
 
     const handleProfileClick = () => {
         if (!isLoggedIn) {
             router.push('/login');
+        } else {
+            router.push('/profile');
         }
     };
 
@@ -138,8 +205,8 @@ export default function Home() {
         }
     };
 
-    // Render Login screen if on auth route or forced
-    if ((isAuthRoute || showLogin) && !isLoggedIn) {
+    // Render Login screen if on auth route or forced (only after mounted)
+    if (mounted && (isAuthRoute || showLogin) && !isLoggedIn) {
         return (
             <Login
                 onLogin={handleLogin}
@@ -150,11 +217,21 @@ export default function Home() {
 
     return (
         <div className="flex bg-background h-screen w-full overflow-hidden text-foreground">
-            <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+            {!isSidebarCollapsed && <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />}
 
-            <main className="flex-1 flex flex-col p-6 gap-6 overflow-hidden bg-muted/10">
+            <main className={`flex-1 flex flex-col p-6 gap-6 overflow-hidden bg-muted/10 ${isSidebarCollapsed ? 'ml-0' : ''}`}>
                 <header className="flex justify-between items-center bg-background/50 p-4 border rounded-xl border-border">
                     <div className="flex items-center gap-4">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={toggleSidebar} 
+                            className="h-8 w-8 rounded-lg cursor-pointer"
+                            title="Toggle sidebar"
+                        >
+                            <CollapseIcon className="h-4 w-4" />
+                        </Button>
+                        <div className="h-8 w-px bg-border"></div>
                         <div>
                             <h1 className="text-xl font-bold tracking-tight">
                                 {activeTab === 'Dashboard' ? 'System Metrics' : activeTab}
@@ -176,21 +253,57 @@ export default function Home() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9 rounded-lg">
-                                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                                <span className="sr-only">Toggle theme</span>
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9 rounded-lg cursor-pointer">
+                                        <ContrastIcon className="h-[1.2rem] w-[1.2rem]" />
+                                        <span className="sr-only">Toggle theme</span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="bg-background border-border text-foreground">
+                                    <p>Toggle theme</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg cursor-pointer">
                                 <Bell className="h-4 w-4" />
                             </Button>
 
-                            {isLoggedIn ? (
-                                <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10">
-                                    <LogOut className="h-4 w-4" />
-                                </Button>
+                            {!mounted ? (
+                                <div className="h-9 w-9 rounded-lg animate-pulse bg-muted/50"></div>
+                            ) : isLoggedIn ? (
+                                <>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={handleProfileClick} className="h-9 w-9 rounded-lg cursor-pointer">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src="" alt="Profile" />
+                                                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                                                        TU
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" className="bg-background border-border text-foreground">
+                                            <div className="space-y-1">
+                                                <p className="font-semibold">Test User</p>
+                                                <p className="text-xs text-muted-foreground">test@gmail.com</p>
+                                                <p className="text-xs text-muted-foreground">Click to view profile</p>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer">
+                                                <LogOut className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" className="bg-background border-border text-foreground">
+                                            <p>Logout</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </>
                             ) : (
-                                <Button variant="ghost" size="icon" onClick={handleProfileClick} className="h-9 w-9 rounded-lg">
+                                <Button variant="ghost" size="icon" onClick={handleProfileClick} className="h-9 w-9 rounded-lg cursor-pointer">
                                     <User className="h-4 w-4" />
                                 </Button>
                             )}
