@@ -46,12 +46,23 @@ interface Log {
 
 /* ---------------- COMPONENT ---------------- */
 
-export default function TerminalWidget() {
+export default function TerminalWidget({
+  autoFetch = true,
+  pollIntervalMs = 8000,
+  focusedPollIntervalMs = 2000,
+  pauseWhenHidden = true,
+}: {
+  autoFetch?: boolean;
+  pollIntervalMs?: number;
+  focusedPollIntervalMs?: number;
+  pauseWhenHidden?: boolean;
+}) {
   const router = useRouter();
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const lastLogTimeRef = useRef<number>(0);
+  const isFetchingRef = useRef(false);
 
   const [logs, setLogs] = useState<Log[]>([]);
   const [command, setCommand] = useState("");
@@ -60,6 +71,7 @@ export default function TerminalWidget() {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [allowSystemInfo, setAllowSystemInfo] = useState(false);
   const [showSecurityDialog, setShowSecurityDialog] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(true);
 
   // Load security setting from localStorage on mount
   useEffect(() => {
@@ -73,6 +85,18 @@ export default function TerminalWidget() {
   useEffect(() => {
     localStorage.setItem('flowzen-allow-system-info', allowSystemInfo.toString());
   }, [allowSystemInfo]);
+
+  useEffect(() => {
+    if (!pauseWhenHidden) return;
+
+    const onVisibilityChange = () => {
+      setIsPageVisible(document.visibilityState === 'visible');
+    };
+
+    onVisibilityChange();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [pauseWhenHidden]);
   
   const handleSecurityToggle = () => {
     if (allowSystemInfo) {
@@ -116,8 +140,14 @@ export default function TerminalWidget() {
   /* ---------------- FETCH LOGS (NO CMD DUPLICATES) ---------------- */
 
   const fetchLogs = async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     const res = await fetch("http://localhost:5000/api/logs");
-    if (!res.ok) return;
+    if (!res.ok) {
+      isFetchingRef.current = false;
+      return;
+    }
 
     const serverLogs: Log[] = await res.json();
 
@@ -142,28 +172,36 @@ export default function TerminalWidget() {
       return time > lastLogTimeRef.current;
     });
 
-    if (!newLogs.length) return;
+    if (!newLogs.length) {
+      isFetchingRef.current = false;
+      return;
+    }
 
     lastLogTimeRef.current = Math.max(
       ...newLogs.map((l) => new Date(l.timestamp).getTime())
     );
 
     setLogs((prev) => [...prev, ...newLogs]);
+
+    isFetchingRef.current = false;
   };
 
   useEffect(() => {
+    if (!autoFetch) return;
+    if (pauseWhenHidden && !isPageVisible) return;
+
     fetchLogs();
-    
-    // Only set up interval when input is focused
+
+    // Poll less frequently when input isn't focused
     let interval: NodeJS.Timeout | null = null;
-    if (isInputFocused) {
-      interval = setInterval(fetchLogs, 2000);
-    }
-    
+
+    const intervalMs = isInputFocused ? focusedPollIntervalMs : pollIntervalMs;
+    interval = setInterval(fetchLogs, intervalMs);
+
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isInputFocused]);
+  }, [autoFetch, isInputFocused, pollIntervalMs, focusedPollIntervalMs, pauseWhenHidden, isPageVisible]);
 
   useEffect(() => {
     if (isAtBottom) scrollToBottom("auto");

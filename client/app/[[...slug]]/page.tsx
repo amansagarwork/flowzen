@@ -191,7 +191,7 @@ export default function Home() {
 
                             {/* Terminal Widget */}
                             <div className="h-[380px] md:h-[420px] overflow-hidden">
-                                <TerminalWidget />
+                                <TerminalWidget autoFetch={false} />
                             </div>
                         </div>
 
