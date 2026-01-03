@@ -24,7 +24,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-center min-h-screen bg-background">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <p className="mt-4 text-muted-foreground">Checking authentication...</p>
+                    <p className="mt-4 text-muted-foreground">Loading...</p>
                 </div>
             </div>
         );
@@ -41,13 +41,13 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="min-h-screen bg-background p-8">
+        <div className="h-screen overflow-y-auto bg-background p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-4">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => router.back()}
                             className="h-10 w-10"
                         >
@@ -74,22 +74,33 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-16 w-16">
                                     <AvatarFallback className="bg-primary/10 text-primary text-lg font-medium">
-                                        {getUserInitials(currentUser.username)}
+                                        {currentUser.avatarUrl ? (
+                                            <img src={currentUser.avatarUrl} alt={currentUser.username || 'User'} className="h-full w-full object-cover" />
+                                        ) : (
+                                            getUserInitials(currentUser.username)
+                                        )}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h3 className="font-semibold">{currentUser.username}</h3>
+                                    <h3 className="font-semibold">{currentUser.username || 'FlowZen User'}</h3>
                                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                                         <Mail className="h-3 w-3" />
                                         {currentUser.email}
                                     </p>
+                                    {currentUser.authProvider && (
+                                        <Badge variant="outline" className="mt-2 text-xs capitalize">
+                                            Via {currentUser.authProvider}
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4 pt-4">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm">Joined: January 2026</span>
+                                    <span className="text-sm">
+                                        Joined: {new Date(Number(currentUser.createdAt) || currentUser.createdAt).toLocaleDateString()}
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Shield className="h-4 w-4 text-muted-foreground" />
@@ -117,7 +128,7 @@ export default function ProfilePage() {
                                     </div>
                                     <Button variant="outline" size="sm">Configure</Button>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between p-3 border rounded-lg">
                                     <div>
                                         <h4 className="font-medium">Security</h4>
@@ -125,7 +136,7 @@ export default function ProfilePage() {
                                     </div>
                                     <Button variant="outline" size="sm">Manage</Button>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between p-3 border rounded-lg">
                                     <div>
                                         <h4 className="font-medium">Privacy</h4>

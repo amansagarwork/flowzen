@@ -1,8 +1,9 @@
 "use client";
 import React from 'react';
-import { Home, Terminal, BarChart2, Settings, Activity, Zap } from 'lucide-react';
+import { Home, Terminal, BarChart2, Settings, Activity, Zap, Folder } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface SidebarProps {
     activeTab: string;
@@ -12,6 +13,7 @@ interface SidebarProps {
 const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     const menuItems = [
         { icon: Home, label: 'Dashboard' },
+        { icon: Folder, label: 'Projects' },
         { icon: Terminal, label: 'Console' },
         { icon: Activity, label: 'Activity' },
         { icon: BarChart2, label: 'Insights' },
@@ -19,7 +21,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     ];
 
     return (
-        <aside className="w-64 border-r border-border h-screen bg-background/50 backdrop-blur-sm flex flex-col p-4">
+        <div className="flex flex-col p-4 h-full w-64 shrink-0">
             <div className="flex items-center gap-2 px-2 mb-8">
                 <div className="bg-primary/20 p-2 rounded-lg">
                     <Zap className="w-5 h-5 text-primary" />
@@ -44,7 +46,15 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 ))}
             </nav>
 
-            <div className="mt-auto pt-4 border-t border-border">
+
+
+            <div className="mt-auto pt-4 border-t border-border space-y-2">
+                <div className="px-3">
+                    <Badge variant="outline" className="gap-2 px-3 py-1.5 font-mono text-[10px] border-emerald-500/20 bg-emerald-500/5 text-black dark:text-white w-fit">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        ONLINE
+                    </Badge>
+                </div>
                 <Button
                     variant={activeTab === 'Support' ? "secondary" : "ghost"}
                     onClick={() => onTabChange('Support')}
@@ -54,7 +64,7 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                     Support
                 </Button>
             </div>
-        </aside>
+        </div>
     );
 };
 

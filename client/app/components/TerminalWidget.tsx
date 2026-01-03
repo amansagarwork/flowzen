@@ -97,15 +97,10 @@ export default function TerminalWidget({
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [pauseWhenHidden]);
-  
+
   const handleSecurityToggle = () => {
-    if (allowSystemInfo) {
-      // If already enabled, disable immediately
-      setAllowSystemInfo(false);
-    } else {
-      // If disabled, show confirmation dialog
-      setShowSecurityDialog(true);
-    }
+    // Show confirmation dialog for both enabling and disabling
+    setShowSecurityDialog(true);
   };
 
   /* ---------------- INIT SCROLL ---------------- */
@@ -214,7 +209,7 @@ export default function TerminalWidget({
     if (!command.trim()) return;
 
     const cmd = command.toLowerCase().trim();
-    
+
     // Check for sensitive system information commands
     const sensitiveCommands = [
       'systeminfo', 'sysinfo', 'info', 'config', 'configuration',
@@ -222,8 +217,8 @@ export default function TerminalWidget({
       'wmic', 'reg', 'powershell', 'cmd', 'whoami', 'hostname',
       'env', 'set', 'dir', 'ls', 'cat /etc/', 'cat /proc/', 'cat /sys/'
     ];
-    
-    const isSensitive = sensitiveCommands.some(sensitive => 
+
+    const isSensitive = sensitiveCommands.some(sensitive =>
       cmd.includes(sensitive) || cmd.startsWith(sensitive)
     );
 
@@ -234,7 +229,7 @@ export default function TerminalWidget({
         level: "WARN",
         message: `Command '${command}' blocked - Enable "Allow PC Info" to run system information commands`
       };
-      
+
       setLogs(prev => [...prev, warningLog]);
       setCommand("");
       requestAnimationFrame(() => scrollToBottom("auto"));
@@ -276,14 +271,14 @@ export default function TerminalWidget({
 
   const handleKill = async () => {
     await fetch("http://localhost:5000/api/logs/clear", { method: "POST" });
-    
+
     // Add a log entry indicating the terminal was cleared
     const clearLog: Log = {
       timestamp: new Date().toISOString(),
       level: "INFO",
       message: "Terminal logs cleared by user."
     };
-    
+
     setLogs([clearLog]);
     lastLogTimeRef.current = Date.now();
   };
@@ -303,53 +298,62 @@ export default function TerminalWidget({
           <AlertDialog open={showSecurityDialog} onOpenChange={setShowSecurityDialog}>
             <AlertDialogTrigger asChild>
               <Button
-                variant="ghost" 
-                size="icon" 
+                variant="ghost"
+                size="icon"
                 onClick={handleSecurityToggle}
                 className={cn(
                   "h-8 w-8",
-                  allowSystemInfo 
-                    ? "text-green-600 hover:text-green-700 hover:bg-green-600/10" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  allowSystemInfo
+                    ? "text-green-600 hover:text-green-700 hover:bg-green-600/10"
+                    : "text-red-600 hover:text-red-700 hover:bg-red-600/10"
                 )}
-                title={allowSystemInfo ? "PC Info Access Enabled (Click to disable)" : "Allow PC Info Access"}
+                title={allowSystemInfo ? "Revoke PC Info Access" : "Allow PC Info Access"}
               >
                 {allowSystemInfo ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Allow PC Information Access?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {allowSystemInfo ? "Revoke PC Information Access?" : "Allow PC Information Access?"}
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will allow the terminal to run commands that access sensitive PC information such as system configuration, network details, and hardware specifications. Only enable this if you trust the source and understand the security implications.
+                  {allowSystemInfo
+                    ? "Are you sure you want to disable PC information access? You will no longer be able to run system commands."
+                    : "This will allow the terminal to run commands that access sensitive PC information such as system configuration, network details, and hardware specifications. Only enable this if you trust the source and understand the security implications."
+                  }
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
-                    setAllowSystemInfo(true);
+                    setAllowSystemInfo(!allowSystemInfo);
                     setShowSecurityDialog(false);
                   }}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className={cn(
+                    allowSystemInfo
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "bg-green-600 hover:bg-green-700 text-white"
+                  )}
                 >
-                  Allow PC Info Access
+                  {allowSystemInfo ? "Revoke Access" : "Allow PC Info Access"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
 
-          <Button variant="ghost" size="icon" onClick={() => router.push("/console")}>
+          <Button variant="ghost" size="icon" onClick={() => router.push("/console")} title="Open Full Console">
             <ExternalLink className="w-4 h-4" />
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={fetchLogs}>
+          <Button variant="ghost" size="icon" onClick={fetchLogs} title="Refresh Logs">
             <RefreshCw className="w-4 h-4" />
           </Button>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-destructive">
+              <Button variant="ghost" size="icon" className="text-destructive" title="Clear Terminal Logs">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
@@ -364,7 +368,7 @@ export default function TerminalWidget({
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleKill}
-                  className="bg-destructive text-destructive-foreground"
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Kill Terminal
                 </AlertDialogAction>
@@ -393,8 +397,8 @@ export default function TerminalWidget({
                     log.level === "ERROR"
                       ? "destructive"
                       : log.level === "CMD"
-                      ? "default"
-                      : "secondary"
+                        ? "default"
+                        : "secondary"
                   }
                   className={cn(
                     "h-6 text-xs font-bold px-3 py-1",
@@ -445,10 +449,10 @@ export default function TerminalWidget({
             className="font-mono"
             autoFocus
           />
-          <Button 
-            type="submit" 
-            disabled={loading} 
-            size="sm" 
+          <Button
+            type="submit"
+            disabled={loading}
+            size="sm"
             className="px-3 bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-600 font-mono font-semibold"
           >
             {loading ? (

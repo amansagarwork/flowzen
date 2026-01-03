@@ -150,7 +150,17 @@ const data = {
   ],
 }
 
+import { useSession } from "@/contexts/SessionContext"
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { currentUser } = useSession()
+
+  const user = {
+    name: currentUser?.username || "User",
+    email: currentUser?.email || "",
+    avatar: currentUser?.avatarUrl || "",
+  }
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -162,7 +172,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">FlowZen</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -174,7 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

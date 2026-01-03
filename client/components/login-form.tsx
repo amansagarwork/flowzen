@@ -18,6 +18,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Zap, ShieldCheck, Eye, EyeOff } from "lucide-react"
 import { PasswordStrength } from "./PasswordStrength"
+import { GoogleSignIn } from "./GoogleSignIn"
+import { toast } from "@/lib/toast"
+import { AppleSpinner } from "./ui/apple-spinner"
 
 export function LoginForm({
   className,
@@ -36,7 +39,6 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
 
   // Sync mode if defaultMode changes from parent (URL change)
   useEffect(() => {
@@ -46,17 +48,15 @@ export function LoginForm({
   const handleModeToggle = (newMode: "login" | "signup") => {
     setMode(newMode);
     onModeChange?.(newMode);
-    setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-    
+
     try {
       const GraphQL_ENDPOINT = "http://localhost:5000/graphql";
-      
+
       if (mode === "login") {
         const loginMutation = `
           mutation {
@@ -70,13 +70,16 @@ export function LoginForm({
                 username
                 email
                 createdAt
+                updatedAt
                 onboardingCompleted
                 projectInterests
+                authProvider
+                avatarUrl
               }
             }
           }
         `;
-        
+
         const response = await fetch(GraphQL_ENDPOINT, {
           method: "POST",
           headers: {
@@ -84,17 +87,17 @@ export function LoginForm({
           },
           body: JSON.stringify({ query: loginMutation })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.errors) {
-          setError(result.errors[0].message);
+          toast.error(result.errors[0].message);
         } else if (result.data?.login) {
           localStorage.removeItem('flowzen_pending_onboarding');
           // Pass user data and token to parent
           onLogin?.(result.data.login.user, result.data.login.token);
         } else {
-          setError("Login failed. Please try again.");
+          toast.error("Login failed. Please try again.");
         }
       } else {
         // Signup mode
@@ -110,13 +113,16 @@ export function LoginForm({
                 username
                 email
                 createdAt
+                updatedAt
                 onboardingCompleted
                 projectInterests
+                authProvider
+                avatarUrl
               }
             }
           }
         `;
-        
+
         const response = await fetch(GraphQL_ENDPOINT, {
           method: "POST",
           headers: {
@@ -124,21 +130,83 @@ export function LoginForm({
           },
           body: JSON.stringify({ query: signupMutation })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.errors) {
-          setError(result.errors[0].message);
+          toast.error(result.errors[0].message);
         } else if (result.data?.register) {
           localStorage.setItem('flowzen_pending_onboarding', 'true');
           // Pass user data and token to parent
           onLogin?.(result.data.register.user, result.data.register.token);
         } else {
-          setError("Registration failed. Please try again.");
+          toast.error("Registration failed. Please try again.");
         }
       }
     } catch (error) {
-      setError("Network error. Please check your connection.");
+      toast.error("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async (idToken: string) => {
+    setLoading(true);
+
+    try {
+      const GraphQL_ENDPOINT = "http://localhost:5000/graphql";
+
+      const googleLoginMutation = `
+        mutation {
+          loginWithGoogle(input: {
+            idToken: "${idToken}"
+          }) {
+            token
+            user {
+                id
+                username
+                email
+                createdAt
+                updatedAt
+                onboardingCompleted
+                projectInterests
+                authProvider
+                avatarUrl
+              }
+            isNewUser
+          }
+        }
+      `;
+
+      const response = await fetch(GraphQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: googleLoginMutation })
+      });
+
+      const result = await response.json();
+
+      if (result.errors) {
+        toast.error(result.errors[0].message);
+      } else if (result.data?.loginWithGoogle) {
+        const { user, token, isNewUser } = result.data.loginWithGoogle;
+
+        // Set onboarding flag for new Google users
+        if (isNewUser) {
+          localStorage.setItem('flowzen_pending_onboarding', 'true');
+        } else {
+          localStorage.removeItem('flowzen_pending_onboarding');
+        }
+
+        // Pass user data and token to parent
+        onLogin?.(user, token);
+      } else {
+        toast.error("Google login failed. Please try again.");
+      }
+    } catch (error) {
+      toast.error("Network error during Google login.");
     } finally {
       setLoading(false);
     }
@@ -212,19 +280,37 @@ export function LoginForm({
                   <PasswordStrength password={password} />
                 )}
               </Field>
-              {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md">
-                  {error}
-                </div>
-              )}
               <Field>
                 <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
-                  {loading ? (mode === "login" ? "Authenticating..." : "Creating Account...") : (mode === "login" ? "Login" : "Sign Up")}
-                  {!loading && <ShieldCheck className="ml-2 w-4 h-4" />}
+                  {loading ? (
+                    <>
+                      <AppleSpinner size="sm" className="mr-2" />
+                      {mode === "login" ? "Authenticating..." : "Creating Account..."}
+                    </>
+                  ) : (
+                    <>
+                      {mode === "login" ? "Login" : "Sign Up"}
+                      <ShieldCheck className="ml-2 w-4 h-4" />
+                    </>
+                  )}
                 </Button>
-                <Button variant="outline" type="button" className="w-full cursor-pointer">
-                  Continue with Google
-                </Button>
+              </Field>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/50" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <Field>
+                <GoogleSignIn
+                  onSuccess={handleGoogleSignIn}
+                  onError={toast.error}
+                  disabled={loading}
+                />
                 <FieldDescription className="text-center mt-2">
                   {mode === "login" ? (
                     <>Don&apos;t have an account? <button type="button" onClick={() => handleModeToggle("signup")} className="underline underline-offset-4 hover:text-primary cursor-pointer">Sign up</button></>

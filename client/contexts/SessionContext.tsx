@@ -1,13 +1,20 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { toast } from '@/lib/toast';
 
 interface User {
   id: string;
   username: string | null;
   email: string;
   createdAt: string;
+  updatedAt?: string;
   onboardingCompleted: boolean;
   projectInterests: string[];
+  authProvider?: string;
+  avatarUrl?: string;
+  googleSub?: string;
+  githubUsername?: string;
+  githubConnected?: boolean;
 }
 
 interface SessionContextType {
@@ -32,13 +39,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const checkSession = () => {
     setIsLoading(true);
-    
+
     // Check localStorage for authentication token and user data
     const token = localStorage.getItem('flowzen_token');
     const userData = localStorage.getItem('flowzen_user');
-    
+
     console.log('🔍 Session check - Token:', !!token, 'User data:', !!userData);
-    
+
     if (token && userData) {
       try {
         const rawUser = JSON.parse(userData);
@@ -72,7 +79,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setCurrentUser(null);
       console.log('🔍 No active session found');
     }
-    
+
     setIsLoading(false);
   };
 
@@ -112,7 +119,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const completeOnboarding = async (username: string, projectInterests: string[]) => {
     const token = localStorage.getItem('flowzen_token');
-    
+
     if (!token) {
       throw new Error('No authentication token found');
     }
@@ -144,8 +151,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
 
       const result = await response.json();
-      
+
       if (result.errors) {
+        toast.error(result.errors[0].message);
         throw new Error(result.errors[0].message);
       }
 
@@ -156,6 +164,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Onboarding completion failed:', error);
+      toast.error('Failed to complete onboarding. Please try again.');
       throw error;
     }
   };

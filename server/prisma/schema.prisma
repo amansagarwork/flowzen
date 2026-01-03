@@ -17,11 +17,35 @@ model User {
   id                  String   @id @default(cuid())
   username            String?  @unique
   email               String   @unique
-  password            String
+  password            String?
+  authProvider        String   @default("local")
+  googleSub           String?  @unique
+  avatarUrl           String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   onboardingCompleted Boolean  @default(false)
   projectInterests    String[] @default([])
+  githubAccessToken   String?
+  githubUsername      String?
+  projects            Project[] // Relation to Projects
 
   @@map("users")
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  status         String   @default("Active") // 'Active', 'Archived', 'Completed'
+  health         String   @default("Healthy") // 'Healthy', 'At Risk', 'Failing'
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  lastAccessedAt DateTime @default(now())
+  currentVersion String   @default("v1")
+  githubRepo     String?
+  githubConnected Boolean @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("projects")
 }

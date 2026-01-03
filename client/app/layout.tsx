@@ -19,6 +19,8 @@ export const metadata: Metadata = {
 
 import { ThemeProvider } from "./components/theme-provider"
 import { SessionProvider } from "../contexts/SessionContext"
+import { StoreProvider } from "./components/StoreProvider"
+import { Toaster } from "@/lib/toast"
 
 export default function RootLayout({
   children,
@@ -27,6 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
@@ -37,9 +42,27 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SessionProvider>
-            {children}
-          </SessionProvider>
+          <StoreProvider>
+            <SessionProvider>
+              {children}
+              <Toaster
+                position="top-right"
+                expand={false}
+                richColors
+                closeButton
+                toastOptions={{
+                  className: 'border-border bg-background shadow-lg',
+                  style: {
+                    background: 'var(--background)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                  },
+                }}
+              />
+            </SessionProvider>
+          </StoreProvider>
         </ThemeProvider>
       </body>
     </html>
