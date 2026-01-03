@@ -759,7 +759,15 @@ export default function Home() {
                                                     </div>
                                                 </div>
                                                 <div className="pt-2">
-                                                    <Button variant="outline" size="sm" className="w-full text-[11px] h-8 hover:bg-primary/5 hover:text-primary transition-colors">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="w-full text-[11px] h-8 hover:bg-primary/5 hover:text-primary transition-colors"
+                                                        onClick={() => {
+                                                            const projectSlug = activeProject?.name.toLowerCase().replace(/\s+/g, '-') || slugArray?.[1];
+                                                            router.push(`/projects/${projectSlug}/${projectVersion || 'v1'}/analytics`);
+                                                        }}
+                                                    >
                                                         Access Analytics Dashboard
                                                     </Button>
                                                 </div>
