@@ -49,7 +49,6 @@ export default function RootLayout({
                 position="top-right"
                 expand={false}
                 richColors
-                closeButton
                 toastOptions={{
                   className: 'border-border bg-background shadow-lg',
                   style: {
