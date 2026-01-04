@@ -137,7 +137,7 @@ pipeline {
                                 export NVM_DIR="$HOME/.nvm"
                                 bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${FRONTEND_DIR} && npm run build'
                             '''
-                            archiveArtifacts artifacts: 'client/dist/**/*', fingerprint: true
+                            archiveArtifacts artifacts: '**/dist/**/*', fingerprint: true
                         }
                     }
                 }
