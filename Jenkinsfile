@@ -71,25 +71,36 @@ pipeline {
             parallel {
                 stage('Frontend Linting') {
                     steps {
-                        dir(env.FRONTEND_DIR) {
-                            sh 'npm run lint || true'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${FRONTEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run lint || true'
+                            '''
                         }
                     }
                 }
                 stage('Backend Linting') {
                     steps {
-                        dir(env.BACKEND_DIR) {
-                            sh 'npm run lint || true'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${BACKEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run lint || true'
+                            '''
                         }
                     }
                 }
                 stage('Security Scan') {
                     steps {
-                        dir(env.FRONTEND_DIR) {
-                            sh 'npm audit --audit-level high || true'
-                        }
-                        dir(env.BACKEND_DIR) {
-                            sh 'npm audit --audit-level high || true'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${FRONTEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm audit --audit-level high || true'
+                                cd ${BACKEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm audit --audit-level high || true'
+                            '''
                         }
                     }
                 }
@@ -100,15 +111,23 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        dir(env.FRONTEND_DIR) {
-                            sh 'npm run test -- --coverage --watchAll=false || true'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${FRONTEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run test -- --coverage --watchAll=false || true'
+                            '''
                         }
                     }
                 }
                 stage('Backend Tests') {
                     steps {
-                        dir(env.BACKEND_DIR) {
-                            sh 'npm run test || true'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${BACKEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run test || true'
+                            '''
                         }
                     }
                 }
@@ -119,16 +138,24 @@ pipeline {
             parallel {
                 stage('Frontend Build') {
                     steps {
-                        dir(env.FRONTEND_DIR) {
-                            sh 'npm run build'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${FRONTEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run build'
+                            '''
+                            archiveArtifacts artifacts: 'client/dist/**/*', fingerprint: true
                         }
-                        archiveArtifacts artifacts: 'client/dist/**/*', fingerprint: true
                     }
                 }
                 stage('Backend Build') {
                     steps {
-                        dir(env.BACKEND_DIR) {
-                            sh 'npm run build || true'
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                cd ${BACKEND_DIR}
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run build || true'
+                            '''
                         }
                     }
                 }
