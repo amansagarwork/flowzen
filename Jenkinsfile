@@ -30,8 +30,8 @@ pipeline {
                         export NVM_DIR="$HOME/.nvm"
                         bash -c '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"'
                         
-                        # Install and use Node.js
-                        bash -c 'source "$NVM_DIR/nvm.sh" && nvm install 18 && nvm use 18'
+                        # Install and use Node.js 20 (required for Next.js)
+                        bash -c 'source "$NVM_DIR/nvm.sh" && nvm install 20 && nvm use 20'
                         
                         # Verify installation
                         bash -c 'source "$NVM_DIR/nvm.sh" && node --version && npm --version'
@@ -48,7 +48,7 @@ pipeline {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
                                 cd ${FRONTEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm ci'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && npm ci'
                             '''
                         }
                     }
@@ -59,7 +59,7 @@ pipeline {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
                                 cd ${BACKEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm ci'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && npm ci'
                             '''
                         }
                     }
@@ -74,7 +74,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm run lint || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${FRONTEND_DIR} && npm run lint || true'
                             '''
                         }
                     }
@@ -84,7 +84,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm run lint || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${BACKEND_DIR} && npm run lint || true'
                             '''
                         }
                     }
@@ -94,8 +94,8 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm audit --audit-level high || true'
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm audit --audit-level high || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${FRONTEND_DIR} && npm audit --audit-level high || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${BACKEND_DIR} && npm audit --audit-level high || true'
                             '''
                         }
                     }
@@ -110,7 +110,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm run test -- --coverage --watchAll=false || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${FRONTEND_DIR} && npm run test -- --coverage --watchAll=false || true'
                             '''
                         }
                     }
@@ -120,7 +120,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm run test || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${BACKEND_DIR} && npm run test || true'
                             '''
                         }
                     }
@@ -135,7 +135,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm run build'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${FRONTEND_DIR} && npm run build'
                             '''
                             archiveArtifacts artifacts: 'client/dist/**/*', fingerprint: true
                         }
@@ -146,7 +146,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm run build || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 20 && cd ${BACKEND_DIR} && npm run build || true'
                             '''
                         }
                     }
