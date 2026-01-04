@@ -28,7 +28,7 @@ pipeline {
                         
                         # Load nvm
                         export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                        [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
                         
                         # Install and use Node.js
                         nvm install 18
@@ -45,7 +45,7 @@ pipeline {
                             script {
                                 sh '''
                                     export NVM_DIR="$HOME/.nvm"
-                                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                                    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
                                     nvm use 18
                                     cd ${FRONTEND_DIR}
                                     npm ci
@@ -58,7 +58,7 @@ pipeline {
                             script {
                                 sh '''
                                     export NVM_DIR="$HOME/.nvm"
-                                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                                    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
                                     nvm use 18
                                     cd ${BACKEND_DIR}
                                     npm ci
