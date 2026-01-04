@@ -26,17 +26,15 @@ pipeline {
                             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
                         fi
                         
-                        # Load nvm
+                        # Load nvm using bash
                         export NVM_DIR="$HOME/.nvm"
-                        [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+                        bash -c '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"'
                         
                         # Install and use Node.js
-                        nvm install 18
-                        nvm use 18
+                        bash -c 'source "$NVM_DIR/nvm.sh" && nvm install 18 && nvm use 18'
                         
                         # Verify installation
-                        node --version
-                        npm --version
+                        bash -c 'source "$NVM_DIR/nvm.sh" && node --version && npm --version'
                     '''
                 }
             }
@@ -49,10 +47,8 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                                nvm use 18
                                 cd ${FRONTEND_DIR}
-                                npm ci
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm ci'
                             '''
                         }
                     }
@@ -62,10 +58,8 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                                nvm use 18
                                 cd ${BACKEND_DIR}
-                                npm ci
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm ci'
                             '''
                         }
                     }
