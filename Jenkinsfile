@@ -17,18 +17,32 @@ pipeline {
         }
         
         stage('Setup Environment') {
-            parallel {
-                stage('Frontend Setup') {
-                    steps {
-                        dir(env.FRONTEND_DIR) {
-                            sh 'npm ci'
+            steps {
+                script {
+                    // Install Node.js if not present
+                    sh '''
+                        if ! command -v node &> /dev/null; then
+                            echo "Installing Node.js..."
+                            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+                            apt-get install -y nodejs
+                        fi
+                        node --version
+                        npm --version
+                    '''
+                }
+                parallel {
+                    stage('Frontend Setup') {
+                        steps {
+                            dir(env.FRONTEND_DIR) {
+                                sh 'npm ci'
+                            }
                         }
                     }
-                }
-                stage('Backend Setup') {
-                    steps {
-                        dir(env.BACKEND_DIR) {
-                            sh 'npm ci'
+                    stage('Backend Setup') {
+                        steps {
+                            dir(env.BACKEND_DIR) {
+                                sh 'npm ci'
+                            }
                         }
                     }
                 }
