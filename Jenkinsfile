@@ -16,7 +16,7 @@ pipeline {
             }
         }
         
-        stage('Setup Environment') {
+        stage('Setup Node.js') {
             steps {
                 script {
                     // Use nvm to install Node.js without root permissions
@@ -39,31 +39,34 @@ pipeline {
                         npm --version
                     '''
                 }
-                parallel {
-                    stage('Frontend Setup') {
-                        steps {
-                            script {
-                                sh '''
-                                    export NVM_DIR="$HOME/.nvm"
-                                    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                                    nvm use 18
-                                    cd ${FRONTEND_DIR}
-                                    npm ci
-                                '''
-                            }
+            }
+        }
+        
+        stage('Setup Environment') {
+            parallel {
+                stage('Frontend Setup') {
+                    steps {
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+                                nvm use 18
+                                cd ${FRONTEND_DIR}
+                                npm ci
+                            '''
                         }
                     }
-                    stage('Backend Setup') {
-                        steps {
-                            script {
-                                sh '''
-                                    export NVM_DIR="$HOME/.nvm"
-                                    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                                    nvm use 18
-                                    cd ${BACKEND_DIR}
-                                    npm ci
-                                '''
-                            }
+                }
+                stage('Backend Setup') {
+                    steps {
+                        script {
+                            sh '''
+                                export NVM_DIR="$HOME/.nvm"
+                                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+                                nvm use 18
+                                cd ${BACKEND_DIR}
+                                npm ci
+                            '''
                         }
                     }
                 }
