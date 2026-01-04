@@ -1,0 +1,4 @@
+ReferenceError: Cannot access 'critical' before initialization
+    at D:\Aman\2026-projects\flowzen\server\index.js:679:18
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+{}

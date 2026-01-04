@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: flowzen-postgres-staging
+    environment:
+      POSTGRES_DB: flowzen-staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks:
+      - flowzen-staging-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: flowzen-redis-staging
+    ports:
+      - "6380:6379"
+    networks:
+      - flowzen-staging-network
+
+  # Backend Server
+  backend:
+    image: localhost:5000/flowzen-backend:develop
+    container_name: flowzen-backend-staging
+    environment:
+      DATABASE_URL: postgresql://postgres:123456@postgres:5432/flowzen-staging
+      JWT_SECRET: staging-jwt-secret-3f5bd3eebc37f89ac056d4ad5fb5db539d0b71c09c2f6fcdc2cf418f4fb60812
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: staging
+    ports:
+      - "5001:5000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - flowzen-staging-network
+    restart: unless-stopped
+
+  # Frontend Application
+  frontend:
+    image: localhost:5000/flowzen-frontend:develop
+    container_name: flowzen-frontend-staging
+    environment:
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      NEXT_PUBLIC_API_URL: http://localhost:5001
+      NODE_ENV: staging
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+    networks:
+      - flowzen-staging-network
+    restart: unless-stopped
+
+volumes:
+  postgres_staging_data:
+
+networks:
+  flowzen-staging-network:
+    driver: bridge

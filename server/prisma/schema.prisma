@@ -45,7 +45,58 @@ model Project {
   githubRepo     String?
   githubConnected Boolean @default(false)
   createdAt      DateTime @default(now())
+  // CI/CD Configuration
+  jenkinsJob     String?
+  jenkinsUser    String?
+  jenkinsToken   String? // Encrypt in production
+  jenkinsUrl     String?
+  scanMode       String   @default("JENKINS") // JENKINS or NATIVE
   updatedAt      DateTime @updatedAt
+  analyticsEvents AnalyticsEvent[]
+  codeQualityReports CodeQualityReport[]
 
   @@map("projects")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  path      String
+  method    String
+  status    Int
+  latency   Int
+  userAgent String?
+  region    String?  @default("US")
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@map("analytics_events")
+}
+
+model CodeQualityReport {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  score     Int      // 0-100 (Maintainability Rating)
+  rating    String   // "A", "B", "C", "D", "E"
+  
+  // Issues Breakdown
+  critical  Int      // "Blocked"
+  high      Int
+  medium    Int
+  low       Int
+  
+  // SonarQube Metrics
+  coverage      Float    // % Code Coverage
+  duplications  Float    // % Duplicated Lines
+  vulnerabilities Int
+  codeSmells    Int
+  
+  gateStatus String   // "PASSED", "FAILED"
+  buildUrl   String?
+  createdAt  DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@map("quality_reports")
 }

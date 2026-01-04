@@ -4,6 +4,7 @@ import { useParams, useRouter, usePathname } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import TerminalWidget from '../components/TerminalWidget';
 import InsightsPanel from '../components/InsightsPanel';
+import { ProjectAnalytics } from '../../components/ProjectAnalytics';
 import Login from '../components/Login';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -129,8 +130,9 @@ export default function Home() {
         const projectName = slugArray?.[1];
 
         if (mounted && (isProjectWorkbench || isProjectBase) && projectName && isLoggedIn) {
-            // Only fetch if we don't have the active project OR if we need to redirect from base
-            if (!activeProject || isProjectBase) {
+            // Check if we need to fetch the project (if not active, or if slug mismatch, or if redirect needed)
+            const activeProjectSlug = activeProject?.name?.toLowerCase().replace(/\s+/g, '-');
+            if (!activeProject || activeProjectSlug !== projectName || isProjectBase) {
                 fetchProjectByName(projectName, isProjectBase);
             }
         }
@@ -633,6 +635,7 @@ export default function Home() {
                 // Check if we are in a sub-route (e.g., projects/my-project/v1)
                 const isProjectBase = slugArray && slugArray.length === 2 && slugArray[0] === 'projects';
                 const isProjectWorkbench = slugArray && slugArray.length > 2 && slugArray[0] === 'projects';
+                const isProjectAnalytics = slugArray && slugArray.length > 3 && slugArray[0] === 'projects' && slugArray[3] === 'analytics';
                 const projectSlug = slugArray?.[1];
                 const projectVersion = slugArray?.[2];
 
@@ -646,6 +649,19 @@ export default function Home() {
                             </div>
                             <h3 className="text-lg font-semibold mt-6 tracking-tight">Accessing Project</h3>
                             <p className="text-muted-foreground text-sm animate-pulse mt-1">Redirecting to your last updated version...</p>
+                        </div>
+                    );
+                }
+
+                if (isProjectAnalytics) {
+                    return (
+                        <div className="flex-1 flex flex-col gap-6 overflow-auto pr-2 custom-scrollbar pb-12 px-6">
+                            <ProjectAnalytics
+                                key={activeProject?.id || projectSlug}
+                                projectName={activeProject?.name || projectSlug || "Project"}
+                                version={projectVersion || "v1"}
+                                projectId={activeProject?.id || ''}
+                            />
                         </div>
                     );
                 }
@@ -738,7 +754,7 @@ export default function Home() {
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                                                     <GitBranch className="w-3 h-3" />
-                                                    <span className="truncate">{activeProject.githubRepo}</span>
+                                                    <span className="truncate">{activeProject?.githubRepo}</span>
                                                 </div>
                                                 <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-3">
                                                     <div className="flex justify-between items-center text-xs">
@@ -925,8 +941,12 @@ export default function Home() {
                         </div>
 
                         {projectsLoading ? (
-                            <div className="flex-1 flex items-center justify-center h-64">
-                                <AppleSpinner size="lg" className="text-primary" />
+                            <div className="flex-1 overflow-hidden flex flex-col h-full bg-muted/5">
+                                <ProjectAnalytics
+                                    projectName={projectSlug || ''}
+                                    version={projectVersion || 'v1'}
+                                    projectId={activeProject?.id || ''}
+                                />
                             </div>
                         ) : userProjects.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

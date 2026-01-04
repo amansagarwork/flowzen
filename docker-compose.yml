@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: flowzen-postgres
+    environment:
+      POSTGRES_DB: flowzen-v1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flowzen-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: flowzen-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - flowzen-network
+
+  # Backend Server
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: flowzen-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:123456@postgres:5432/flowzen-v1
+      JWT_SECRET: 3f5bd3eebc37f89ac056d4ad5fb5db539d0b71c09c2f6fcdc2cf418f4fb60812
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - flowzen-network
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: flowzen-frontend
+    environment:
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - flowzen-network
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: flowzen-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - flowzen-network
+
+volumes:
+  postgres_data:
+
+networks:
+  flowzen-network:
+    driver: bridge
