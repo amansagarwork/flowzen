@@ -16,7 +16,7 @@ pipeline {
             }
         }
         
-        stage('Setup Environment') {
+        stage('Install Node.js') {
             steps {
                 script {
                     // Install Node.js if not present
@@ -30,19 +30,22 @@ pipeline {
                         npm --version
                     '''
                 }
-                parallel {
-                    stage('Frontend Setup') {
-                        steps {
-                            dir(env.FRONTEND_DIR) {
-                                sh 'npm ci'
-                            }
+            }
+        }
+        
+        stage('Setup Environment') {
+            parallel {
+                stage('Frontend Setup') {
+                    steps {
+                        dir(env.FRONTEND_DIR) {
+                            sh 'npm ci'
                         }
                     }
-                    stage('Backend Setup') {
-                        steps {
-                            dir(env.BACKEND_DIR) {
-                                sh 'npm ci'
-                            }
+                }
+                stage('Backend Setup') {
+                    steps {
+                        dir(env.BACKEND_DIR) {
+                            sh 'npm ci'
                         }
                     }
                 }
