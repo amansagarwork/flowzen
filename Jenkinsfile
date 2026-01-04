@@ -74,8 +74,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${FRONTEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run lint || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm run lint || true'
                             '''
                         }
                     }
@@ -85,8 +84,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${BACKEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run lint || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm run lint || true'
                             '''
                         }
                     }
@@ -96,10 +94,8 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${FRONTEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm audit --audit-level high || true'
-                                cd ${BACKEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm audit --audit-level high || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm audit --audit-level high || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm audit --audit-level high || true'
                             '''
                         }
                     }
@@ -114,8 +110,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${FRONTEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run test -- --coverage --watchAll=false || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm run test -- --coverage --watchAll=false || true'
                             '''
                         }
                     }
@@ -125,8 +120,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${BACKEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run test || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm run test || true'
                             '''
                         }
                     }
@@ -141,8 +135,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${FRONTEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run build'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${FRONTEND_DIR} && npm run build'
                             '''
                             archiveArtifacts artifacts: 'client/dist/**/*', fingerprint: true
                         }
@@ -153,8 +146,7 @@ pipeline {
                         script {
                             sh '''
                                 export NVM_DIR="$HOME/.nvm"
-                                cd ${BACKEND_DIR}
-                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && npm run build || true'
+                                bash -c 'source "$NVM_DIR/nvm.sh" && nvm use 18 && cd ${BACKEND_DIR} && npm run build || true'
                             '''
                         }
                     }
